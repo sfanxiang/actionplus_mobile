@@ -132,6 +132,7 @@ class _ActionBrowserItemState extends State<ActionBrowserItem> {
           new MaterialPageRoute(
             builder: (context) => new WillPopScope(
                   child: new Material(
+                    color: Colors.black,
                     child: new ActionPlayer(
                       id: widget.id,
                       standardId: _metadata.scoreAgainst != ''

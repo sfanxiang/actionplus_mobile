@@ -182,7 +182,7 @@ class _ActionPlayerState extends State<ActionPlayer> {
     // hijacking ListTile because Row doesn't (didn't) work here
     Widget control = new ListTile(
       leading: new IconButton(
-        icon: new Icon(Icons.stop),
+        icon: new Icon(Icons.stop, color: Colors.white),
         onPressed: () {
           try {
             if (sampleController != null) {
