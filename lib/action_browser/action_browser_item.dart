@@ -2,9 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:screen/screen.dart';
 
 import '../action_manager/action_manager.dart';
 import '../action_manager/action_metadata.dart';
+import '../action_player/action_player.dart';
+import '../critical_enter_once.dart';
 import '../normalized_height.dart';
 import '../reduced_serialized_entrance.dart';
 import 'action_browser_actions.dart';
@@ -68,11 +72,11 @@ class _ActionBrowserItemState extends State<ActionBrowserItem> {
     return new Card(
       child: new Column(children: <Widget>[
         new Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: _thumbnail == null
-                ? new CircularProgressIndicator()
-                : new NormalizedHeight(
-                    child: Image.file(new File(_thumbnail), fit: BoxFit.fill))),
+          alignment: AlignmentDirectional.topCenter,
+          child: _thumbnail == null
+              ? new CircularProgressIndicator()
+              : buildPreview(context),
+        ),
         new Align(
             alignment: AlignmentDirectional.bottomStart,
             child: new SingleChildScrollView(
@@ -93,5 +97,68 @@ class _ActionBrowserItemState extends State<ActionBrowserItem> {
         : new Text('Untitled',
             style:
                 new TextStyle(color: Colors.grey, fontStyle: FontStyle.italic));
+  }
+
+  Widget buildPreview(BuildContext context) {
+    return new InkWell(
+      child: new Stack(
+        children: <Widget>[
+          new NormalizedHeight(
+            child: Image.file(new File(_thumbnail), fit: BoxFit.fill),
+          ),
+          new Positioned(
+            left: 0.0,
+            bottom: 0.0,
+            child: new Icon(Icons.play_circle_filled),
+          ),
+        ],
+      ),
+      onTap: () {
+        if (!mounted) return;
+        if (_metadata == null) return;
+
+        if (CriticalEnterOnce.entered) return;
+        CriticalEnterOnce.entered = true;
+
+        try {
+          SystemChrome.setEnabledSystemUIOverlays([]);
+        } catch (_) {}
+        try {
+          Screen.keepOn(true);
+        } catch (_) {}
+
+        Navigator.push(
+          context,
+          new MaterialPageRoute(
+            builder: (context) => new WillPopScope(
+                  child: new Material(
+                    child: new ActionPlayer(
+                      id: widget.id,
+                      standardId: _metadata.scoreAgainst != ''
+                          ? _metadata.scoreAgainst
+                          : null,
+                      onFinished: () {
+                        CriticalEnterOnce.entered = false;
+
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
+
+                        try {
+                          SystemChrome.setEnabledSystemUIOverlays(
+                              SystemUiOverlay.values);
+                        } catch (_) {}
+                        try {
+                          Screen.keepOn(false);
+                        } catch (_) {}
+                      },
+                    ),
+                  ),
+                  onWillPop: () async => false,
+                ),
+          ),
+        );
+      },
+    );
   }
 }

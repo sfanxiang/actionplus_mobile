@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../action_manager/action_manager.dart';
 import '../action_manager/action_metadata.dart';
 import '../actionplus_localizations.dart';
-import 'import_enter_once.dart';
+import '../critical_enter_once.dart';
 import 'record_page.dart';
 
 class ImportPage extends StatefulWidget {
@@ -81,13 +81,13 @@ class _ImportPageState extends State<ImportPage> {
   void onImportFromDevice(BuildContext context) {
     if (!mounted) return;
 
-    if (ImportEnterOnce.importing) return;
-    ImportEnterOnce.importing = true;
+    if (CriticalEnterOnce.entered) return;
+    CriticalEnterOnce.entered = true;
 
     ImagePicker.pickVideo(source: ImageSource.gallery).then((file) {
       if (!mounted) return;
 
-      ImportEnterOnce.importing = false;
+      CriticalEnterOnce.entered = false;
 
       if (file != null) {
         ActionManager.importAction(file.path, new ActionMetadata());

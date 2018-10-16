@@ -258,8 +258,11 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
     if (playerDuration == 0) playerDuration = 1;
 
     return new LinearProgressIndicator(
-      value: _playerController.value.position.inMilliseconds.toDouble() /
-          playerDuration.toDouble(),
+      value: min(
+        _playerController.value.position.inMilliseconds.toDouble() /
+            playerDuration.toDouble(),
+        1.0,
+      ),
     );
   }
 }

@@ -5,7 +5,7 @@ import 'package:screen/screen.dart';
 import '../action_picker/action_picker.dart';
 import '../action_recorder/action_recorder.dart';
 import '../actionplus_localizations.dart';
-import 'import_enter_once.dart';
+import '../critical_enter_once.dart';
 
 class RecordPage extends StatefulWidget {
   RecordPage({Key key, this.onSaved}) : super(key: key);
@@ -70,8 +70,8 @@ class _RecordPageState extends State<RecordPage> {
     if (selected) return;
     selected = true;
 
-    if (ImportEnterOnce.importing) return;
-    ImportEnterOnce.importing = true;
+    if (CriticalEnterOnce.entered) return;
+    CriticalEnterOnce.entered = true;
 
     bool finished = false;
     try {
@@ -107,7 +107,7 @@ class _RecordPageState extends State<RecordPage> {
               onWillPop: () async {
                 if (!finished) return false;
 
-                ImportEnterOnce.importing = false;
+                CriticalEnterOnce.entered = false;
 
                 try {
                   SystemChrome.setEnabledSystemUIOverlays(
