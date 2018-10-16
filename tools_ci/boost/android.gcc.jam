@@ -1,0 +1,16 @@
+import os ;
+using gcc : android
+:
+__INSERT_TOOLCHAIN__
+:
+<compileflags>-D__ANDROID_API__=21
+<compileflags>-march=armv7-a
+<compileflags>-mfloat-abi=softfp
+<compileflags>-mfpu=neon
+<compileflags>-pie
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-DNDEBUG
+<compileflags>-O2
+<architecture>arm
+;

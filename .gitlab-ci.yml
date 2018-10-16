@@ -1,0 +1,142 @@
+build_android:
+  stage: build
+  script:
+  - apt-get update -qq && apt-get install -y -qq unzip openjdk-8-jdk lib32stdc++6
+
+  # install Android SDK and set ANDROID_HOME for Flutter
+  - export ANDROID_HOME=$(pwd)/Android/Sdk
+  - mkdir -p $ANDROID_HOME
+  - curl -s -L -O https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+  - unzip -q -d $ANDROID_HOME sdk-tools-linux-4333796.zip
+  - yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses > /dev/null || true
+  - $ANDROID_HOME/tools/bin/sdkmanager "build-tools;27.0.3" "extras;android;m2repository" "extras;google;m2repository" "ndk-bundle" "platform-tools" "platforms;android-27" "tools" > /dev/null
+  - yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses > /dev/null || true
+
+  # install separate NDK toolchain; r14b can be used to compile tensorflow lite
+  - curl -s -L -O https://dl.google.com/android/repository/android-ndk-r14b-linux-x86_64.zip
+  - unzip -q android-ndk-r14b-linux-x86_64.zip
+  # name it ndk for Tensorflow Lite
+  - mv ./android-ndk-r14b ./ndk
+  - export NDK_OLD_ROOT=$(pwd)/ndk
+  - export NDK_OLD_TOOLCHAIN_ROOT=$(pwd)/android-toolchain-arm-ndk14b-api21
+  - $NDK_OLD_ROOT/build/tools/make_standalone_toolchain.py --arch arm --api 21 --install-dir $NDK_OLD_TOOLCHAIN_ROOT
+
+  # build cpufeatures
+  - $NDK_OLD_ROOT/ndk-build NDK_PROJECT_PATH=$NDK_OLD_ROOT/sources/android/cpufeatures APP_BUILD_SCRIPT=$NDK_OLD_ROOT/sources/android/cpufeatures/Android.mk
+
+  # download the latest release of TensorFlow
+  - curl -s -L $(curl -s -L https://api.github.com/repos/tensorflow/tensorflow/releases/latest | python -c "import sys, json; print(json.load(sys.stdin)['tarball_url'])") | tar -z -x && mv tensorflow* tensorflow
+
+  # build TensorFlow Lite using $NDK_OLD_ROOT and $NDK_OLD_TOOLCHAIN_ROOT
+  # due to a include file, $NDK_OLD_ROOT must be end with a directory called "ndk"
+  - cd tensorflow && tensorflow/contrib/lite/tools/make/download_dependencies.sh && cd ..
+  - >
+    cd tensorflow && make -s -j $(nproc) -f tensorflow/contrib/lite/tools/make/Makefile
+    TARGET=android TARGET_ARCH=armeabi-v7a
+    TARGET_TOOLCHAIN_PREFIX=$NDK_OLD_TOOLCHAIN_ROOT/bin/arm-linux-androideabi-
+    CFLAGS="-O3 -DNDEBUG -D__ANDROID_API__=21 -march=armv7-a -mfloat-abi=softfp -mfpu=neon -pie -isystem $NDK_OLD_ROOT/.."
+    CXXFLAGS="-O3 -DNDEBUG -std=c++11 -D__ANDROID_API__=21 -march=armv7-a -mfloat-abi=softfp -mfpu=neon -pie -isystem $NDK_OLD_ROOT/.."
+    LDFLAGS="-march=armv7-a -pie -L $NDK_OLD_ROOT/sources/android/cpufeatures/obj/local/armeabi-v7a"
+    LIBS="-lm -lz -ldl -llog -lcpufeatures"
+    LD=$NDK_OLD_TOOLCHAIN_ROOT/bin/arm-linux-androideabi-g++
+    SHELL=bash && cd ..
+
+  # download flutter
+  # TODO: Currently we download from beta channel. When Flutter is stable, use the stable channel.
+  - git clone -b beta https://github.com/flutter/flutter.git --depth=1
+  - export PATH=`pwd`/flutter/bin:$PATH
+  - flutter doctor
+  - flutter config --no-analytics
+  - yes | flutter doctor --android-licenses > /dev/null || true
+
+  # build libjpeg
+  - curl -s -L https://www.ijg.org/$(curl -s -L https://www.ijg.org/ | sed -E 's/^.*\"([-/\_A-Za-z0-9]+jpegsrc\..*\.tar\.gz)\".*$/\1/' | grep -E '[-/\_A-Za-z0-9]+jpegsrc\..*\.tar\.gz') | tar -z -x && mv jpeg* jpeg
+  - >
+    cd jpeg && ./configure --enable-static --disable-shared --host=arm-linux-androideabi
+    CC=$NDK_OLD_TOOLCHAIN_ROOT/bin/arm-linux-androideabi-gcc
+    CFLAGS="-D__ANDROID_API__=21 -march=armv7-a -mfloat-abi=softfp -mfpu=neon -pie" && cd ..
+  - cd jpeg && make -s -j $(nproc) && DESTDIR=$(pwd)/install make -s install && cd ..
+
+  # build boost
+  - curl -s -L $(curl -s -L https://www.boost.org/users/download/ | sed -E 's/^.*\"(https\:\/\/.*boost_.*\.tar\.gz)\".*$/\1/' | grep -E 'https\:\/\/.*boost_.*\.tar\.gz') | tar -z -x && mv boost* boost
+  - cp tools_ci/boost/*.jam boost
+  - sed -i "s|__INSERT_TOOLCHAIN__|$NDK_OLD_TOOLCHAIN_ROOT/bin/arm-linux-androideabi-g++|g" boost/android.gcc.jam
+  - cd boost/tools/build && ./bootstrap.sh && ./b2 -d0 -j $(nproc) install --prefix=../../build_tools && cd ../../..
+  - >
+    cd boost && PATH=$PATH:$(pwd)/build_tools/bin b2 -d0 -j $(nproc) --user-config=android.gcc.jam --build-type=minimal --layout=system
+    --with-filesystem --with-system
+    toolset=gcc-android variant=release link=static threading=multi runtime-link=shared && cd ..
+
+  # build ffmpeg
+  - curl -s -L $(curl -s -L https://ffmpeg.org/download.html | sed -E 's/^.*\"(https\:\/\/.*ffmpeg-.*\.tar\.bz2)\".*$/\1/' | grep -E 'https\:\/\/.*ffmpeg-.*\.tar\.bz2') | tar -j -x && mv ffmpeg* ffmpeg
+  # fix Android library versioning
+  - sed -i "s/SLIBNAME_WITH_MAJOR='\\\$(SLIBNAME).\\\$(LIBMAJOR)'/SLIBNAME_WITH_MAJOR='\\\$(SLIBPREF)\\\$(FULLNAME)-\\\$(LIBMAJOR)\\\$(SLIBSUF)'/g" ffmpeg/configure
+  - sed -i "s/SLIB_INSTALL_NAME='\\\$(SLIBNAME_WITH_VERSION)'/SLIB_INSTALL_NAME='\\\$(SLIBNAME_WITH_MAJOR)'/g" ffmpeg/configure
+  - sed -i "s/SLIB_INSTALL_LINKS='\\\$(SLIBNAME_WITH_MAJOR) \\\$(SLIBNAME)'/SLIB_INSTALL_LINKS='\\\$(SLIBNAME)'/g" ffmpeg/configure
+  - cd ffmpeg && ./configure --enable-static --disable-shared --disable-doc --disable-symver --cross-prefix=$NDK_OLD_TOOLCHAIN_ROOT/bin/arm-linux-androideabi- --target-os=linux --arch=arm --enable-cross-compile --extra-cflags="-D__ANDROID_API__=21 -march=armv7-a -mfloat-abi=softfp -mfpu=neon -pie" && cd ..
+  # fix name conflicts
+  - sed -i 's/B0/name_B0/g' ffmpeg/libavcodec/aaccoder.c
+  - sed -i 's/B0/name_B0/g' ffmpeg/libavcodec/hevc_mvs.c
+  - sed -i 's/B0/name_B0/g' ffmpeg/libavcodec/opus_pvq.c
+  - cd ffmpeg && make -s -j $(nproc) && DESTDIR=$(pwd)/install make -s install && cd ..
+
+  # download actionplus_lib
+  - git clone https://gitlab.com/actionplus/actionplus_lib.git --depth=1
+  # download libaction
+  - git clone https://gitlab.com/libaction/libaction.git --depth=1
+
+  # build C++ code
+  - >
+    CXX=$NDK_OLD_TOOLCHAIN_ROOT/bin/arm-linux-androideabi-g++
+    CXXFLAGS="-D__ANDROID_API__=21
+    -isystem $(pwd)/actionplus_lib/include
+    -isystem $(pwd)/boost
+    -isystem $(pwd)/ffmpeg/install/usr/local/include
+    -isystem $(pwd)/jpeg/install/usr/local/include
+    -isystem $(pwd)/libaction/include
+    -isystem $(pwd)/tensorflow/
+    -isystem $(pwd)/tensorflow/tensorflow/contrib/lite/tools/make/downloads/flatbuffers/include
+    -Wl,--start-group
+    -L $(pwd)/boost/stage/lib
+    -lboost_filesystem
+    -lboost_system
+    -L $NDK_OLD_ROOT/sources/android/cpufeatures/obj/local/armeabi-v7a
+    -lcpufeatures
+    -L $(pwd)/ffmpeg/install/usr/local/lib
+    -lavcodec
+    -lavformat
+    -lavutil
+    -lswresample
+    -lswscale
+    -L $(pwd)/jpeg/install/usr/local/lib
+    -ljpeg
+    -L $(pwd)/tensorflow/tensorflow/contrib/lite/tools/make/gen/android_armeabi-v7a/lib
+    -ltensorflow-lite
+    -Wl,--end-group
+    -ldl -llog -lm -lz
+    -march=armv7-a -mfloat-abi=softfp -mfpu=neon -pie"
+    ./build_cpp.sh
+
+  # TODO: Remove this patch when the camera plugin is fixed.
+  - flutter packages get
+  - >
+    sed -i 's/setVideoEncodingBitRate(1024 \* 1000)/setVideoEncodingBitRate(10000000)/g'
+    $(find ~/.pub-cache/hosted/pub.dartlang.org/camera-*/android/src/main/java/io/flutter/plugins/camera/CameraPlugin.java | tail -1)
+
+  # build
+  - flutter build apk --target-platform android-arm
+  - cp build/app/outputs/apk/app.apk actionplus.apk
+
+  artifacts:
+    name: actionplus
+    paths:
+    - actionplus.apk
+
+#release:
+#  stage: deploy
+#  script:
+#  - echo Do something
+#  artifacts:
+#    name: "actionplus_mobile-$CI_COMMIT_REF_NAME"
+#    paths:
+#    - build/SOMETHING
