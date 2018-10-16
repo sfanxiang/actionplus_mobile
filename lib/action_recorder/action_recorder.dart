@@ -75,9 +75,11 @@ class _ActionRecorderState extends State<ActionRecorder> {
               _cameraController.dispose();
             } catch (_) {}
 
-            if (result.saved)
-              ActionManager.importAction(result.path, new ActionMetadata(),
+            if (result.saved) {
+              ActionManager.importAction(result.path,
+                  new ActionMetadata()..scoreAgainst = widget.standardId ?? '',
                   move: true);
+            }
 
             _setStage(
               stage: _ActionRecorderStage.finished,
