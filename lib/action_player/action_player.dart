@@ -37,7 +37,9 @@ class _ActionPlayerState extends State<ActionPlayer> {
     () async {
       try {
         sampleVideo = await ActionManager.video(widget.id);
-        standardVideo = await ActionManager.video(widget.standardId);
+        standardVideo = widget.standardId != null
+            ? await ActionManager.video(widget.standardId)
+            : null;
         if (sampleVideo == '') {
           sampleVideo = null;
           throw new Exception();
