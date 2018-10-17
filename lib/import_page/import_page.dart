@@ -43,7 +43,8 @@ class _ImportPageState extends State<ImportPage> {
                     new SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: new Text(
-                            ActionplusLocalizations.of(context).importFromDevice,
+                            ActionplusLocalizations.of(context)
+                                .importFromDevice,
                             style:
                                 TextStyle(color: Colors.white, fontSize: 15.0),
                             softWrap: false)),
@@ -85,35 +86,23 @@ class _ImportPageState extends State<ImportPage> {
     CriticalEnterOnce.entered = true;
 
     ImagePicker.pickVideo(source: ImageSource.gallery).then((file) {
-      if (!mounted) return;
-
       CriticalEnterOnce.entered = false;
 
       if (file != null) {
         ActionManager.importAction(file.path, new ActionMetadata());
-
-        Scaffold.of(context).showSnackBar(new SnackBar(
-            content: new Text('Importing video...'),
-            duration: new Duration(seconds: 1)));
       }
     });
+
+    Navigator.pop(context);
   }
 
   void onRecordVideo(BuildContext context) {
     if (!mounted) return;
 
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       new MaterialPageRoute(
-        builder: (context) => new RecordPage(
-              onSaved: () {
-                if (!mounted) return;
-
-                Scaffold.of(context).showSnackBar(new SnackBar(
-                    content: new Text('Saving recording...'),
-                    duration: new Duration(seconds: 1)));
-              },
-            ),
+        builder: (context) => new RecordPage(),
       ),
     );
   }
