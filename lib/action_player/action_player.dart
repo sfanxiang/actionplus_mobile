@@ -2,20 +2,33 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 
 import '../action_manager/action_manager.dart';
+import '../video_player_plus.dart';
 
 // TODO: Some Android devices doesn't support playing two videos at the same time.
 //       In the long run, offer a setting to turn off dual playback.
 
+typedef ActionPlayerOverlayCallback = Widget Function(Duration position);
+typedef ActionPlayerSpeedCallback = double Function(Duration position);
+
 class ActionPlayer extends StatefulWidget {
-  ActionPlayer({Key key, @required this.id, this.standardId, this.onFinished})
-      : super(key: key);
+  ActionPlayer({
+    Key key,
+    @required this.id,
+    this.standardId,
+    this.onFinished,
+    this.sampleOverlayCallback,
+    this.standardOverlayCallback,
+    this.speedCallback,
+  }) : super(key: key);
 
   final String id;
   final String standardId;
   final VoidCallback onFinished;
+  final ActionPlayerOverlayCallback sampleOverlayCallback;
+  final ActionPlayerOverlayCallback standardOverlayCallback;
+  final ActionPlayerSpeedCallback speedCallback;
 
   @override
   _ActionPlayerState createState() => new _ActionPlayerState();
@@ -27,8 +40,10 @@ class _ActionPlayerState extends State<ActionPlayer> {
 
   String sampleVideo, standardVideo;
 
-  VideoPlayerController sampleController, standardController;
-  VideoPlayerController _initSampleController, _initStandardController;
+  VideoPlayerPlusValue sampleVideoValue, standardVideoValue;
+
+  Duration sampleSetPosition, standardSetPosition;
+  bool paused = false;
 
   @override
   void initState() {
@@ -48,6 +63,7 @@ class _ActionPlayerState extends State<ActionPlayer> {
       } catch (_) {
         if (!mounted) return;
         if (!finishedCalled) {
+          finishedCalled = true;
           try {
             widget.onFinished();
           } catch (_) {}
@@ -55,99 +71,24 @@ class _ActionPlayerState extends State<ActionPlayer> {
         return;
       }
 
-      initPlayback();
-    }();
-  }
-
-  void initPlayback() {
-    Function tryFinishInit = () {
-      if (!mounted) {
-        if (_initSampleController != null) {
-          try {
-            _initSampleController.dispose();
-          } catch (_) {}
-          _initSampleController = null;
-        }
-        if (_initStandardController != null) {
-          try {
-            _initStandardController.dispose();
-          } catch (_) {}
-          _initStandardController = null;
-        }
-        return;
-      }
-
-      if (_initSampleController == null) return;
-      if (standardVideo != null && _initStandardController == null) return;
-
-      sampleController = _initSampleController;
-      _initSampleController = null;
-      standardController = _initStandardController;
-      _initStandardController = null;
-
-      sampleController.play();
-      standardController?.play();
-
       init = true;
-
-      setState(() {});
-    };
-
-    var controller = new VideoPlayerController.file(new File(sampleVideo));
-    controller.initialize().then((_) {
-      controller.addListener(onUpdate);
-
-      if (standardVideo != null) {
-        controller.setVolume(0.0).then((_) {
-          _initSampleController = controller;
-          tryFinishInit();
-        });
-      } else {
-        _initSampleController = controller;
-        tryFinishInit();
-      }
-    });
-
-    if (standardVideo != null) {
-      var controller = new VideoPlayerController.file(new File(standardVideo));
-      controller.initialize().then((_) {
-        controller.addListener(onUpdate);
-        _initStandardController = controller;
-
-        tryFinishInit();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    for (var controller in [
-      sampleController,
-      standardController,
-      _initSampleController,
-      _initStandardController
-    ]) {
-      controller?.dispose();
-    }
-
-    sampleController = standardController =
-        _initSampleController = _initStandardController = null;
-
-    super.dispose();
+      if (mounted) setState(() {});
+    }();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!init ||
-        sampleController == null ||
-        (standardVideo != null && standardController == null)) {
+    if (!init) {
       return new Center(
           child: new Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           const CircularProgressIndicator(),
           new FlatButton(
-              child: new Text('Stop loading'.toUpperCase()),
+              child: new Text(
+                'Stop loading'.toUpperCase(),
+                style: new TextStyle(color: Colors.white),
+              ),
               onPressed: () {
                 if (!finishedCalled) {
                   finishedCalled = true;
@@ -164,72 +105,120 @@ class _ActionPlayerState extends State<ActionPlayer> {
   }
 
   Widget buildContent(BuildContext context) {
+    Duration currentSampleSetPosition = sampleSetPosition;
+    sampleSetPosition = null;
+    Duration currentStandardSetPosition = standardSetPosition;
+    standardSetPosition = null;
+
+    var speed = 0.0;
+
+    if (!paused) {
+      if (sampleVideoValue != null && widget.speedCallback != null) {
+        speed = max(0.4, widget.speedCallback(sampleVideoValue.position));
+      } else {
+        speed = 1.0;
+      }
+    }
+
     List<Widget> widgets = <Widget>[
       new Expanded(
-        child: new AspectRatio(
-          aspectRatio: sampleController.value.aspectRatio,
-          child: new VideoPlayer(sampleController),
+        child: new Stack(
+          children: <Widget>[
+            new VideoPlayerPlus(
+              file: new File(sampleVideo),
+              position: currentSampleSetPosition,
+              volume: standardVideo != null ? 0.0 : 1.0,
+              speed: speed,
+              onUpdated: onSampleUpdated,
+              onCompleted: onCompleted,
+            ),
+            sampleVideoValue != null && widget.sampleOverlayCallback != null
+                ? new Positioned.fill(
+                    child:
+                        widget.sampleOverlayCallback(sampleVideoValue.position))
+                : new Container(height: 0.0, width: 0.0),
+          ],
         ),
       ),
     ];
 
     double maxProgress =
-        sampleController.value.duration.inMilliseconds.toDouble();
+        sampleVideoValue?.duration?.inMilliseconds?.toDouble() ?? 1.0;
+    if (standardVideo != null) {
+      maxProgress = min(maxProgress,
+          standardVideoValue?.duration?.inMilliseconds?.toDouble() ?? 1.0);
+    }
     double currentProgress =
-        sampleController.value.position.inMilliseconds.toDouble();
+        sampleVideoValue?.position?.inMilliseconds?.toDouble() ?? 0.0;
     currentProgress = min(maxProgress, currentProgress);
 
     // hijacking ListTile because Row doesn't (didn't) work here
     Widget control = new ListTile(
       leading: new IconButton(
-        icon: new Icon(Icons.stop, color: Colors.white),
+        icon: new Icon(paused ? Icons.play_arrow : Icons.pause,
+            color: Colors.white),
         onPressed: () {
-          try {
-            if (sampleController != null) {
-              sampleController.pause().then((_) {
-                sampleController.dispose();
-                sampleController = null;
-              }).catchError((_) {
-                sampleController.dispose();
-                sampleController = null;
-              });
-            }
-            if (standardController != null) {
-              standardController.pause().then((_) {
-                standardController.dispose();
-                standardController = null;
-              }).catchError((_) {
-                standardController.dispose();
-                standardController = null;
-              });
-            }
-          } catch (_) {}
+          if (!mounted) return;
 
-          if (!finishedCalled) {
-            finishedCalled = true;
-            try {
-              widget.onFinished();
-            } catch (_) {}
-          }
+          paused = !paused;
+          setState(() {});
         },
       ),
-      title: new Slider(
-        max: maxProgress,
-        value: currentProgress,
-        onChanged: (value) {
-          // TODO
-        },
+      title: new ListTile(
+        contentPadding: EdgeInsets.all(0.0),
+        leading: new IconButton(
+          icon: new Icon(Icons.stop, color: Colors.white),
+          onPressed: () {
+            if (!mounted) return;
+
+            paused = true;
+            if (!finishedCalled) {
+              finishedCalled = true;
+              try {
+                widget.onFinished();
+              } catch (_) {}
+            }
+            setState(() {});
+          },
+        ),
+        title: new Slider(
+          max: maxProgress,
+          value: currentProgress,
+          onChanged: (value) {
+            if (!mounted) return;
+
+            int truncated = value.truncate();
+            if (truncated < maxProgress) {
+              sampleSetPosition =
+                  standardSetPosition = new Duration(milliseconds: truncated);
+              setState(() {});
+            }
+          },
+        ),
       ),
     );
 
-    if (standardController != null) {
+    if (standardVideo != null) {
       widgets.insert(0, control);
       widgets.insert(
         0,
         new Expanded(
-          child: new AspectRatio(
-            aspectRatio: standardController.value.aspectRatio,
-            child: new VideoPlayer(standardController),
+          child: new Stack(
+            children: <Widget>[
+              new VideoPlayerPlus(
+                file: new File(standardVideo),
+                position: currentStandardSetPosition,
+                speed: speed,
+                onUpdated: onStandardUpdated,
+                onCompleted: onCompleted,
+              ),
+              sampleVideoValue != null && // use sample video's value here
+                      widget.standardOverlayCallback != null
+                  ? new Positioned.fill(
+                      child: widget
+                          .standardOverlayCallback(sampleVideoValue.position))
+                  : new Container(height: 0.0, width: 0.0),
+            ],
           ),
         ),
       );
@@ -240,48 +229,39 @@ class _ActionPlayerState extends State<ActionPlayer> {
     return new Column(children: widgets);
   }
 
-  bool get finished {
-    if (sampleController == null) return false;
-
-    var duration = sampleController.value.duration.inMilliseconds;
-    if (standardController != null) {
-      duration =
-          min(duration, standardController.value.duration.inMilliseconds);
-    }
-
-    if (sampleController.value.position.inMilliseconds >= duration - 128)
-      return true;
-    if (standardController != null) {
-      if (standardController.value.position.inMilliseconds >= duration - 128)
-        return true;
-    }
-
-    return false;
-  }
-
-  void onUpdate() {
+  void onSampleUpdated(VideoPlayerPlusValue value) {
     if (!mounted) return;
 
+    sampleVideoValue = value;
     setState(() {});
+  }
 
-    if (!finishedCalled && finished) {
+  void onStandardUpdated(VideoPlayerPlusValue value) {
+    if (!mounted) return;
+
+    standardVideoValue = value;
+    if (sampleVideoValue != null) {
+      if ((sampleVideoValue.position.inMilliseconds -
+                      standardVideoValue.position.inMilliseconds)
+                  .abs() >=
+              200 &&
+          standardSetPosition == null) {
+        standardSetPosition = sampleVideoValue.position;
+      }
+    }
+    setState(() {});
+  }
+
+  void onCompleted() {
+    if (!mounted) return;
+
+    paused = true;
+    if (!finishedCalled) {
       finishedCalled = true;
       try {
         widget.onFinished();
       } catch (_) {}
     }
-
-    if (!finished && sampleController != null && standardController != null) {
-      if ((sampleController.value.position.inMilliseconds -
-                  standardController.value.position.inMilliseconds)
-              .abs() >=
-          1000) {
-        if (sampleController.value.position.inMilliseconds <
-            standardController.value.duration.inMilliseconds) {
-          standardController.seekTo(new Duration(
-              milliseconds: sampleController.value.position.inMilliseconds));
-        }
-      }
-    }
+    setState(() {});
   }
 }
