@@ -5,43 +5,57 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-class VideoPlayerPlusValue {
+class VideoPlaybackValue {
   Duration duration;
   Duration position;
 
-  VideoPlayerPlusValue({@required this.duration, @required this.position});
+  VideoPlaybackValue({@required this.duration, @required this.position});
+
+  VideoPlaybackValue copyWith({
+    Duration duration,
+    Duration position,
+  }) {
+    return VideoPlaybackValue(
+      duration: duration ?? this.duration,
+      position: position ?? this.position,
+    );
+  }
 }
 
-class VideoPlayerPlus extends StatefulWidget {
-  VideoPlayerPlus({
+class VideoPlayback extends StatefulWidget {
+  VideoPlayback({
     Key key,
     @required this.file,
+    bool playing,
     Duration position,
     double volume,
     double speed,
-    this.onUpdated,
-    this.onCompleted,
-  })  : _position = <Duration>[position],
+    this.onUpdate,
+    this.onComplete,
+  })  : this.playing = playing ?? true,
+        _position = <Duration>[position],
         this.volume = volume ?? 1.0,
         this.speed = speed ?? 1.0,
         super(key: key);
 
   final File file;
+  final bool playing;
   final List<Duration> _position;
   final double volume;
   final double speed;
-  final ValueChanged<VideoPlayerPlusValue> onUpdated;
-  final VoidCallback onCompleted;
+  final ValueChanged<VideoPlaybackValue> onUpdate;
+  final VoidCallback onComplete;
 
   @override
-  _VideoPlayerPlusState createState() => new _VideoPlayerPlusState();
+  _VideoPlaybackState createState() => new _VideoPlaybackState();
 }
 
-class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
+class _VideoPlaybackState extends State<VideoPlayback> {
   bool _completeCalled = false;
 
   VideoPlayerController _controller;
 
+  bool _playing;
   double _volume;
   double _speed;
 
@@ -60,7 +74,7 @@ class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
       new Timer.periodic(new Duration(milliseconds: 100), _onTimer);
 
       try {
-        widget.onUpdated(new VideoPlayerPlusValue(
+        widget.onUpdate(new VideoPlaybackValue(
             duration: _controller.value.duration,
             position: _controller.value.position));
       } catch (_) {}
@@ -88,6 +102,10 @@ class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
   }
 
   Widget _buildContent(BuildContext context) {
+    if (widget.playing != _playing) {
+      _playing = widget.playing;
+      _playing ? _controller.play() : _controller.pause();
+    }
     if (widget._position[0] != null) {
       _controller.seekTo(widget._position[0]);
       widget._position[0] = null;
@@ -97,12 +115,8 @@ class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
       _controller.setVolume(_volume);
     }
     if (widget.speed != _speed) {
-      if (widget.speed == 1.0 && !_controller.value.isPlaying) {
-        _controller.play();
-      } else if (widget.speed != 1.0 && _controller.value.isPlaying) {
-        _controller.pause();
-      }
       _speed = widget.speed;
+      _controller.setSpeed(_speed);
     }
 
     return new AspectRatio(
@@ -128,7 +142,7 @@ class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
       if (!_completeCalled) {
         _completeCalled = true;
         try {
-          widget.onCompleted();
+          widget.onComplete();
         } catch (_) {}
       }
       return;
@@ -136,7 +150,7 @@ class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
 
     if (_controller != null && _controller.value != null) {
       try {
-        widget.onUpdated(new VideoPlayerPlusValue(
+        widget.onUpdate(new VideoPlaybackValue(
             duration: _controller.value.duration,
             position: _controller.value.position));
       } catch (_) {}
@@ -149,26 +163,11 @@ class _VideoPlayerPlusState extends State<VideoPlayerPlus> {
       return;
     }
 
-    if (_controller == null || _speed == null) return;
-    if (_speed < 0.4) return;
+    var position = await _controller.position;
 
-    var duration = _controller.value.duration.inMilliseconds;
-    var positionDuration = await _controller.position;
-    var position = positionDuration.inMilliseconds;
-
-    if (_speed == 1.0) {
-      try {
-        widget.onUpdated(new VideoPlayerPlusValue(
-            duration: _controller.value.duration, position: positionDuration));
-      } catch (_) {}
-      return;
-    }
-
-    if (position + (100 * _speed).truncate() < duration) {
-      _controller.seekTo(
-          new Duration(milliseconds: position + (100 * _speed).truncate()));
-    } else {
-      _controller.seekTo(new Duration(milliseconds: max(duration - 1, 0)));
-    }
+    try {
+      widget.onUpdate(new VideoPlaybackValue(
+          duration: _controller.value.duration, position: position));
+    } catch (_) {}
   }
 }

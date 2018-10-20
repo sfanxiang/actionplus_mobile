@@ -7,7 +7,7 @@ import 'package:screen/screen.dart';
 
 import '../action_manager/action_manager.dart';
 import '../action_manager/action_metadata.dart';
-import '../action_player/action_player.dart';
+import '../action_player/action_simple_player.dart';
 import '../critical_enter_once.dart';
 import '../normalized_height.dart';
 import '../reduced_serialized_entrance.dart';
@@ -133,12 +133,12 @@ class _ActionBrowserItemState extends State<ActionBrowserItem> {
             builder: (context) => new WillPopScope(
                   child: new Material(
                     color: Colors.black,
-                    child: new ActionPlayer(
+                    child: new ActionSimplePlayer(
                       id: widget.id,
                       standardId: _metadata.scoreAgainst != ''
                           ? _metadata.scoreAgainst
                           : null,
-                      onFinished: () {
+                      onFinish: () {
                         CriticalEnterOnce.entered = false;
 
                         if (mounted) {
