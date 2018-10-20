@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import 'action_manager/action_manager.dart';
+
 class VideoPlaybackValue {
   Duration duration;
   Duration position;
@@ -30,12 +32,14 @@ class VideoPlayback extends StatefulWidget {
     Duration position,
     double volume,
     double speed,
+    bool flipped,
     this.onUpdate,
     this.onComplete,
   })  : this.playing = playing ?? true,
         _position = <Duration>[position],
         this.volume = volume ?? 1.0,
         this.speed = speed ?? 1.0,
+        this.flipped = flipped ?? false,
         super(key: key);
 
   final File file;
@@ -43,6 +47,7 @@ class VideoPlayback extends StatefulWidget {
   final List<Duration> _position;
   final double volume;
   final double speed;
+  final bool flipped;
   final ValueChanged<VideoPlaybackValue> onUpdate;
   final VoidCallback onComplete;
 
@@ -69,9 +74,11 @@ class _VideoPlaybackState extends State<VideoPlayback> {
         ctl.dispose();
         return;
       }
+      ctl.addListener(_onUpdate);
       _controller = ctl;
-      _controller.addListener(_onUpdate);
-      new Timer.periodic(new Duration(milliseconds: 100), _onTimer);
+      new Timer.periodic(
+          new Duration(milliseconds: 1000 ~/ 2 ~/ ActionManager.readFrameRate),
+          _onTimer);
 
       try {
         widget.onUpdate(new VideoPlaybackValue(
@@ -85,6 +92,7 @@ class _VideoPlaybackState extends State<VideoPlayback> {
 
   @override
   void dispose() {
+    _controller?.removeListener(_onUpdate);
     _controller?.dispose();
     _controller = null;
     super.dispose();
@@ -119,10 +127,21 @@ class _VideoPlaybackState extends State<VideoPlayback> {
       _controller.setSpeed(_speed);
     }
 
-    return new AspectRatio(
-      aspectRatio: _controller.value.aspectRatio,
-      child: new VideoPlayer(_controller),
-    );
+    if (!widget.flipped) {
+      return new AspectRatio(
+        aspectRatio: _controller.value.aspectRatio,
+        child: new VideoPlayer(_controller),
+      );
+    } else {
+      return new Transform(
+        alignment: Alignment.center,
+        transform: new Matrix4.rotationY(pi),
+        child: new AspectRatio(
+          aspectRatio: _controller.value.aspectRatio,
+          child: new VideoPlayer(_controller),
+        ),
+      );
+    }
   }
 
   bool get _completed {

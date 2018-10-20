@@ -13,6 +13,7 @@ class Player extends StatefulWidget {
     Duration position,
     double volume,
     double speed,
+    bool flipped,
     this.overlay,
     this.onUpdate,
     this.onSeek,
@@ -21,6 +22,7 @@ class Player extends StatefulWidget {
   })  : _position = <Duration>[position],
         this.volume = volume ?? 1.0,
         this.speed = speed ?? 1.0,
+        this.flipped = flipped ?? false,
         super(key: key);
 
   final File file;
@@ -28,6 +30,7 @@ class Player extends StatefulWidget {
   final List<Duration> _position;
   final double volume;
   final double speed;
+  final bool flipped;
   final Widget overlay;
   final ValueChanged<VideoPlaybackValue> onUpdate;
   final ValueChanged<VideoPlaybackValue> onSeek;
@@ -69,21 +72,25 @@ class _PlayerState extends State<Player> {
     return new Column(
       children: <Widget>[
         new Expanded(
-          child: new Stack(
-            children: <Widget>[
-              new VideoPlayback(
-                file: widget.file,
-                playing: _playing,
-                position: currentPosition,
-                volume: !_finished ? widget.volume : 0.0,
-                speed: widget.speed,
-                onUpdate: _onUpdate,
-                onComplete: _onComplete,
-              ),
-              new Positioned.fill(
-                child: widget.overlay ?? new Container(height: 0.0, width: 0.0),
-              ),
-            ],
+          child: new Center(
+            child: new Stack(
+              children: <Widget>[
+                new VideoPlayback(
+                  file: widget.file,
+                  playing: _playing,
+                  position: currentPosition,
+                  volume: !_finished ? widget.volume : 0.0,
+                  speed: widget.speed,
+                  flipped: widget.flipped,
+                  onUpdate: _onUpdate,
+                  onComplete: _onComplete,
+                ),
+                new Positioned.fill(
+                  child:
+                      widget.overlay ?? new Container(height: 0.0, width: 0.0),
+                ),
+              ],
+            ),
           ),
         ),
         new PlayerControl(

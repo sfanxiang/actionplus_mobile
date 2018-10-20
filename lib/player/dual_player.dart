@@ -14,6 +14,7 @@ class DualPlayer extends StatefulWidget {
     Duration position,
     double volume,
     double speed,
+    bool flipped,
     this.sampleOverlay,
     this.standardOverlay,
     this.onUpdate,
@@ -23,6 +24,7 @@ class DualPlayer extends StatefulWidget {
   })  : _position = <Duration>[position],
         this.volume = volume ?? 1.0,
         this.speed = speed ?? 1.0,
+        this.flipped = flipped ?? false,
         super(key: key);
 
   final File sampleFile;
@@ -31,6 +33,7 @@ class DualPlayer extends StatefulWidget {
   final List<Duration> _position;
   final double volume;
   final double speed;
+  final bool flipped;
   final Widget sampleOverlay;
   final Widget standardOverlay;
   final ValueChanged<VideoPlaybackValue> onUpdate;
@@ -74,22 +77,25 @@ class _DualPlayerState extends State<DualPlayer> {
     return new Column(
       children: <Widget>[
         new Expanded(
-          child: new Stack(
-            children: <Widget>[
-              new VideoPlayback(
-                file: widget.standardFile,
-                playing: _playing,
-                position: currentPosition,
-                volume: !_finished && _playing ? widget.volume : 0.0,
-                speed: widget.speed,
-                onUpdate: _onStandardUpdate,
-                onComplete: _onComplete,
-              ),
-              new Positioned.fill(
-                child: widget.standardOverlay ??
-                    new Container(height: 0.0, width: 0.0),
-              ),
-            ],
+          child: new Center(
+            child: new Stack(
+              children: <Widget>[
+                new VideoPlayback(
+                  file: widget.standardFile,
+                  playing: _playing,
+                  position: currentPosition,
+                  volume: !_finished && _playing ? widget.volume : 0.0,
+                  speed: widget.speed,
+                  flipped: widget.flipped,
+                  onUpdate: _onStandardUpdate,
+                  onComplete: _onComplete,
+                ),
+                new Positioned.fill(
+                  child: widget.standardOverlay ??
+                      new Container(height: 0.0, width: 0.0),
+                ),
+              ],
+            ),
           ),
         ),
         new PlayerControl(
@@ -132,22 +138,25 @@ class _DualPlayerState extends State<DualPlayer> {
           onStop: _onStop,
         ),
         new Expanded(
-          child: new Stack(
-            children: <Widget>[
-              new VideoPlayback(
-                file: widget.sampleFile,
-                playing: _playing,
-                position: currentPosition,
-                volume: 0.0,
-                speed: widget.speed,
-                onUpdate: _onSampleUpdate,
-                onComplete: _onComplete,
-              ),
-              new Positioned.fill(
-                child: widget.sampleOverlay ??
-                    new Container(height: 0.0, width: 0.0),
-              ),
-            ],
+          child: new Center(
+            child: new Stack(
+              children: <Widget>[
+                new VideoPlayback(
+                  file: widget.sampleFile,
+                  playing: _playing,
+                  position: currentPosition,
+                  volume: 0.0,
+                  speed: widget.speed,
+                  flipped: widget.flipped,
+                  onUpdate: _onSampleUpdate,
+                  onComplete: _onComplete,
+                ),
+                new Positioned.fill(
+                  child: widget.sampleOverlay ??
+                      new Container(height: 0.0, width: 0.0),
+                ),
+              ],
+            ),
           ),
         ),
       ],

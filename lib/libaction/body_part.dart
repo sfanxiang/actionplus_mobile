@@ -45,4 +45,48 @@ class BodyPart {
         '); score: ' +
         score.toString();
   }
+
+  static String indexToString(BodyPartIndex index) {
+    switch (index) {
+      case BodyPartIndex.nose:
+        return 'Nose';
+      case BodyPartIndex.neck:
+        return 'Neck';
+      case BodyPartIndex.shoulderR:
+        return 'Right shoulder';
+      case BodyPartIndex.elbowR:
+        return 'Right elbow';
+      case BodyPartIndex.wristR:
+        return 'Right hand';
+      case BodyPartIndex.shoulderL:
+        return 'Left shoulder';
+      case BodyPartIndex.elbowL:
+        return 'Left elbow';
+      case BodyPartIndex.wristL:
+        return 'Left hand';
+      case BodyPartIndex.hipR:
+        return 'Right hip';
+      case BodyPartIndex.kneeR:
+        return 'Right knee';
+      case BodyPartIndex.ankleR:
+        return 'Right ankle';
+      case BodyPartIndex.hipL:
+        return 'Left hip';
+      case BodyPartIndex.kneeL:
+        return 'Left knee';
+      case BodyPartIndex.ankleL:
+        return 'Left ankle';
+      case BodyPartIndex.eyeR:
+         return 'Right eye';
+      case BodyPartIndex.eyeL:
+        return 'Left eye';
+      case BodyPartIndex.earR:
+        return 'Right ear';
+      case BodyPartIndex.earL:
+        return 'Left ear';
+      case BodyPartIndex.end:
+        return 'Unknown';
+    }
+    return 'Unknown';
+  }
 }
