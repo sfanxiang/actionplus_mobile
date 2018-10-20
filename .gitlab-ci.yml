@@ -117,11 +117,28 @@ build_android:
     -march=armv7-a -mfloat-abi=softfp -mfpu=neon -pie"
     ./build_cpp.sh
 
-  # TODO: Remove this patch when the camera plugin is fixed.
+  # TODO: Remove the patches when they are fixed.
   - flutter packages get
+  # Camera audio permission fix
+  - >
+    curl https://github.com/sfanxiang/plugins/commit/c209da3218292b7a26bd5b3e9fcd10c55b756c17.patch
+    | patch -Np3 -t -r /dev/null -d $(ls -d ~/.pub-cache/hosted/pub.dartlang.org/camera-* | tail -1)
+  # Camera bitrate patch
   - >
     sed -i 's/setVideoEncodingBitRate(1024 \* 1000)/setVideoEncodingBitRate(10000000)/g'
     $(find ~/.pub-cache/hosted/pub.dartlang.org/camera-*/android/src/main/java/io/flutter/plugins/camera/CameraPlugin.java | tail -1)
+  # Video player set speed patch #1
+  - >
+    curl https://github.com/sfanxiang/plugins/commit/a318a0a92bff3526a9e60c6bc124ca0de18179c1.patch
+    | patch -Np3 -t -r /dev/null -d $(ls -d ~/.pub-cache/hosted/pub.dartlang.org/video_player-* | tail -1)
+  # Video player set speed patch #2
+  - >
+    curl https://github.com/sfanxiang/plugins/commit/ed34bdcd58a83bfc12af2f5530ca2d5e34add0dc.patch
+    | patch -Np3 -t -r /dev/null -d $(ls -d ~/.pub-cache/hosted/pub.dartlang.org/video_player-* | tail -1)
+  # Video player rotation fix, on top of ed34bdcd58a83bfc12af2f5530ca2d5e34add0dc
+  - >
+    curl https://github.com/sfanxiang/plugins/commit/c4469ba3a5c31ffdb1c824286ff89cf5b858b60b.patch
+    | patch -Np3 -t -r /dev/null -d $(ls -d ~/.pub-cache/hosted/pub.dartlang.org/video_player-* | tail -1)
 
   # build
   - flutter build apk --target-platform android-arm
