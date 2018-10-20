@@ -455,12 +455,12 @@ static jobjectArray missed_moves_to_jarray(JNIEnv *env,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_init(JNIEnv* env, jobject,
-                                                  jstring dir,
-                                                  jbyteArray graph,
-                                                  jint graphHeight,
-                                                  jint graphWidth,
-                                                  jobject callbacks,
-                                                  jobject initCallback)
+                                                        jstring dir,
+                                                        jbyteArray graph,
+                                                        jint graphHeight,
+                                                        jint graphWidth,
+                                                        jobject callbacks,
+                                                        jobject initCallback)
 {
     if (!jvm) {
         if (env->GetJavaVM(&jvm) < 0) {
@@ -585,7 +585,7 @@ Java_com_actionplus_actionplusmobile_ActionManager_init(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_list(JNIEnv* env, jobject,
-                                                  jobject callback)
+                                                        jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -620,8 +620,8 @@ Java_com_actionplus_actionplusmobile_ActionManager_list(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_info(JNIEnv* env, jobject,
-                                                  jstring id,
-                                                  jobject callback)
+                                                        jstring id,
+                                                        jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -654,8 +654,8 @@ Java_com_actionplus_actionplusmobile_ActionManager_info(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_video(JNIEnv* env, jobject,
-                                                   jstring id,
-                                                   jobject callback)
+                                                         jstring id,
+                                                         jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -685,8 +685,8 @@ Java_com_actionplus_actionplusmobile_ActionManager_video(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_thumbnail(JNIEnv* env, jobject,
-                                                       jstring id,
-                                                       jobject callback)
+                                                             jstring id,
+                                                             jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -716,8 +716,8 @@ Java_com_actionplus_actionplusmobile_ActionManager_thumbnail(JNIEnv* env, jobjec
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_isAnalyzed(JNIEnv* env, jobject,
-                                                        jstring id,
-                                                        jobject callback)
+                                                              jstring id,
+                                                              jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -747,8 +747,8 @@ Java_com_actionplus_actionplusmobile_ActionManager_isAnalyzed(JNIEnv* env, jobje
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_getAnalysis(JNIEnv* env, jobject,
-                                                         jstring id,
-                                                         jobject callback)
+                                                               jstring id,
+                                                               jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -782,7 +782,7 @@ Java_com_actionplus_actionplusmobile_ActionManager_getAnalysis(JNIEnv* env, jobj
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_currentAnalysisMeta(JNIEnv* env, jobject,
-                                                                 jobject callback)
+                                                                       jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -812,9 +812,9 @@ Java_com_actionplus_actionplusmobile_ActionManager_currentAnalysisMeta(JNIEnv* e
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_waitForAnalysis(JNIEnv* env, jobject,
-                                                             jstring id,
-                                                             jint pos,
-                                                             jobject callback)
+                                                                   jstring id,
+                                                                   jint pos,
+                                                                   jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -850,9 +850,9 @@ Java_com_actionplus_actionplusmobile_ActionManager_waitForAnalysis(JNIEnv* env, 
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_quickScore(JNIEnv* env, jobject,
-                                                        jstring sampleId,
-                                                        jstring standardId,
-                                                        jobject callback)
+                                                              jstring sampleId,
+                                                              jstring standardId,
+                                                              jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -889,11 +889,11 @@ Java_com_actionplus_actionplusmobile_ActionManager_quickScore(JNIEnv* env, jobje
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_score(JNIEnv* env, jobject,
-                                                   jstring sampleId,
-                                                   jstring standardId,
-                                                   jint missedThreshold,
-                                                   jint missedMaxLength,
-                                                   jobject callback)
+                                                         jstring sampleId,
+                                                         jstring standardId,
+                                                         jint missedThreshold,
+                                                         jint missedMaxLength,
+                                                         jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -945,10 +945,10 @@ Java_com_actionplus_actionplusmobile_ActionManager_score(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_liveScore(JNIEnv* env, jobject,
-                                                       jstring sampleId,
-                                                       jobjectArray sample,
-                                                       jstring standardId,
-                                                       jobject callback)
+                                                             jstring sampleId,
+                                                             jobjectArray sample,
+                                                             jstring standardId,
+                                                             jobject callback)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -1000,10 +1000,10 @@ Java_com_actionplus_actionplusmobile_ActionManager_liveScore(JNIEnv* env, jobjec
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_importAction(JNIEnv* env, jobject,
-                                                          jstring path,
-                                                          jstring title,
-                                                          jstring scoreAgainst,
-                                                          jboolean move)
+                                                                jstring path,
+                                                                jstring title,
+                                                                jstring scoreAgainst,
+                                                                jboolean move)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -1029,8 +1029,8 @@ Java_com_actionplus_actionplusmobile_ActionManager_importAction(JNIEnv* env, job
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_exportVideo(JNIEnv* env, jobject,
-                                                         jstring id,
-                                                         jstring path)
+                                                               jstring id,
+                                                               jstring path)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -1050,9 +1050,9 @@ Java_com_actionplus_actionplusmobile_ActionManager_exportVideo(JNIEnv* env, jobj
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_update(JNIEnv* env, jobject,
-                                                    jstring id,
-                                                    jstring title,
-                                                    jstring scoreAgainst)
+                                                          jstring id,
+                                                          jstring title,
+                                                          jstring scoreAgainst)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -1078,7 +1078,7 @@ Java_com_actionplus_actionplusmobile_ActionManager_update(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_remove(JNIEnv* env, jobject,
-                                                    jstring id)
+                                                          jstring id)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
@@ -1094,7 +1094,7 @@ Java_com_actionplus_actionplusmobile_ActionManager_remove(JNIEnv* env, jobject,
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_actionplus_actionplusmobile_ActionManager_analyze(JNIEnv* env, jobject,
-                                                     jstring id)
+                                                           jstring id)
 {
     if (!action_manager) {
         java_throw(env, "java/lang/Exception", "Not initialized");
