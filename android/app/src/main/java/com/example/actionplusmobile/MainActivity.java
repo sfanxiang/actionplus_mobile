@@ -319,23 +319,17 @@ public class MainActivity extends FlutterActivity {
                                         });
                                     }
                                 });
-                            } else if (call.method.equals("waitForAnalysis")) {
-                                String id = call.argument("id");
-                                int pos = call.argument("pos");
-
-                                if (id == null)
-                                    throw new NullPointerException();
-
-                                ActionManager.waitForAnalysis(id, pos, new ActionManager.WaitForAnalysisCallbacks() {
+                            } else if (call.method.equals("currentAnalysis")) {
+                                ActionManager.currentAnalysis(new ActionManager.CurrentAnalysisCallbacks() {
                                     @Override
-                                    public void onWaitForAnalysis(final boolean running, final int length, final Object[][] humans) {
+                                    public void onCurrentAnalysis(final String id, final int length, final Object[][] humans) {
                                         safeRunOnUiThread(result, new Runnable() {
                                             @Override
                                             public void run() {
                                                 ArrayList<ArrayList<ArrayList<Object>>> humansDecode
                                                         = decodeHumans(humans);
                                                 result.success(new ArrayList<Object>(
-                                                        Arrays.asList(running, length, humansDecode)));
+                                                        Arrays.asList(id, length, humansDecode)));
                                             }
                                         });
                                     }

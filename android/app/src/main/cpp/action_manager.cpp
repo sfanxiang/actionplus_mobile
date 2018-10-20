@@ -811,9 +811,7 @@ Java_com_actionplus_actionplusmobile_ActionManager_currentAnalysisMeta(JNIEnv* e
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_actionplus_actionplusmobile_ActionManager_waitForAnalysis(JNIEnv* env, jobject,
-                                                                   jstring id,
-                                                                   jint pos,
+Java_com_actionplus_actionplusmobile_ActionManager_currentAnalysis(JNIEnv* env, jobject,
                                                                    jobject callback)
 {
     if (!action_manager) {
@@ -821,28 +819,27 @@ Java_com_actionplus_actionplusmobile_ActionManager_waitForAnalysis(JNIEnv* env, 
         return;
     }
 
-    const char* id_tmp = env->GetStringUTFChars(id, nullptr);
-    std::string id_string(id_tmp);
-    env->ReleaseStringUTFChars(id, id_tmp);
-
     jobject callback_ref = env->NewGlobalRef(callback);
     if (!callback_ref) {
         java_throw(env, "java/lang/Exception", "Failed to obtain global ref");
         return;
     }
     jclass klass = env->GetObjectClass(callback_ref);
-    jmethodID method = env->GetMethodID(klass, "onWaitForAnalysis", "(ZI[[Ljava/lang/Object;)V");
-    action_manager->wait_for_analysis(id_string, pos, [callback_ref, method]
-            (bool running, std::size_t length,
+    jmethodID method = env->GetMethodID(klass, "onCurrentAnalysis",
+        "(Ljava/lang/String;I[[Ljava/lang/Object;)V");
+    action_manager->current_analysis([callback_ref, method]
+            (const std::string &id, std::size_t length,
                 std::unique_ptr<std::list<std::unique_ptr<libaction::Human>>> humans) {
         JNIEnv* env{};
         if (jvm->AttachCurrentThreadAsDaemon(&env, nullptr) != JNI_OK)
             return;
         try {
             jobjectArray arr = humans ? human_list_to_jarray(env, *humans) : nullptr;
-            env->CallVoidMethod(callback_ref, method, static_cast<jboolean>(running),
+
+            env->CallVoidMethod(callback_ref, method, env->NewStringUTF(id.c_str()),
                 static_cast<jint>(length), arr);
         } catch (...) {}
+
         env->DeleteGlobalRef(callback_ref);
         jvm->DetachCurrentThread();
     });

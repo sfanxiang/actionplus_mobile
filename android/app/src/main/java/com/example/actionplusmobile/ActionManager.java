@@ -47,8 +47,8 @@ public class ActionManager {
         void onCurrentAnalysisMeta(String id, int length, int pos);
     }
 
-    public interface WaitForAnalysisCallbacks {
-        void onWaitForAnalysis(boolean running, int length, Object[][] humans);
+    public interface CurrentAnalysisCallbacks {
+        void onCurrentAnalysis(String id, int length, Object[][] humans);
     }
 
     public interface QuickScoreCallbacks {
@@ -81,7 +81,7 @@ public class ActionManager {
 
     public static native void currentAnalysisMeta(CurrentAnalysisMetaCallbacks callbacks);
 
-    public static native void waitForAnalysis(String id, int pos, WaitForAnalysisCallbacks callbacks);
+    public static native void currentAnalysis(CurrentAnalysisCallbacks callbacks);
 
     public static native void quickScore(String sampleId, String standardId,
                                          QuickScoreCallbacks callbacks);

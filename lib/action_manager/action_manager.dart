@@ -6,8 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:tuple/tuple.dart';
 
 import 'action_metadata.dart';
-import 'wait_for_analysis_result.dart';
 import 'current_analysis_meta_result.dart';
+import 'current_analysis_result.dart';
 import 'live_score_result.dart';
 import 'quick_score_result.dart';
 import 'score_result.dart';
@@ -103,20 +103,18 @@ class ActionManager {
     return new CurrentAnalysisMetaResult(id: id, length: length, pos: pos);
   }
 
-  static Future<WaitForAnalysisResult> waitForAnalysis(
-      String id, int pos) async {
-    List<dynamic> res =
-        await _method.invokeMethod('waitForAnalysis', {'id': id, 'pos': pos});
+  static Future<CurrentAnalysisResult> currentAnalysis() async {
+    List<dynamic> res = await _method.invokeMethod('currentAnalysis');
     if (res == null) return null;
 
-    bool running = res[0];
+    String id = res[0];
     int length = res[1];
     List<dynamic> humans = res[2];
     List<Human> humansDecoded =
         humans?.map((item) => _listToHuman(item as List<dynamic>))?.toList();
 
-    return new WaitForAnalysisResult(
-        running: running, length: length, humans: humansDecoded);
+    return new CurrentAnalysisResult(
+        id: id, length: length, humans: humansDecoded);
   }
 
   static Future<QuickScoreResult> quickScore(
