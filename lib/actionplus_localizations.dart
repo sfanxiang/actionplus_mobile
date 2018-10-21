@@ -22,11 +22,11 @@ class ActionplusLocalizations {
         context, ActionplusLocalizations);
   }
 
-  String get addVideos {
+  String get addVideoClips {
     return Intl.message(
-      'Add videos',
-      name: 'addVideos',
-      desc: 'Add videos',
+      'Add video clips',
+      name: 'addVideoClips',
+      desc: 'Add video clips',
     );
   }
 

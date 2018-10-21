@@ -19,7 +19,7 @@ class _ImportPageState extends State<ImportPage> {
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: new AppBar(
-            title: new Text(ActionplusLocalizations.of(context).addVideos)),
+            title: new Text(ActionplusLocalizations.of(context).addVideoClips)),
         body: new Center(
             child: new SingleChildScrollView(
                 child: new Column(children: <Widget>[
