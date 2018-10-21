@@ -184,6 +184,9 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
     if (_playerController != null) {
       _pendingDisposePlayerController = _playerController;
       _playerController = null;
+      try {
+        _pendingDisposePlayerController.pause();
+      } catch (_) {}
     }
 
     widget.cameraController.stopVideoRecording().then((_) {
