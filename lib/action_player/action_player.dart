@@ -62,8 +62,22 @@ class _ActionPlayerState extends State<ActionPlayer> {
           .then((files) {
         if (!mounted) return;
 
+        if (files.item2 == null) {
+          sampleFile = files.item1;
+          init = true;
+          setState(() {});
+          return;
+        }
+
         new ActionModel(widget.id, widget.standardId).getData().then((data) {
           if (!mounted) return;
+
+          if (data == null) {
+            sampleFile = files.item1;
+            init = true;
+            setState(() {});
+            return;
+          }
 
           sampleFile = files.item1;
           standardFile = files.item2;
