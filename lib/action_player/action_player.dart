@@ -40,7 +40,7 @@ class _ActionPlayerState extends State<ActionPlayer> {
   bool init = false;
   bool finished = false;
   File sampleFile, standardFile;
-  ActionModelData dualCompareData;
+  ActionModelData dualModelData;
   Duration dualPosition = new Duration(milliseconds: 0);
   SpeedOption dualSpeedOption = SpeedOption.speedAuto;
   MovementsOption dualMovementsOption = MovementsOption.auto;
@@ -81,7 +81,7 @@ class _ActionPlayerState extends State<ActionPlayer> {
 
           sampleFile = files.item1;
           standardFile = files.item2;
-          dualCompareData = data;
+          dualModelData = data;
           init = true;
           setState(() {});
         });
@@ -124,8 +124,8 @@ class _ActionPlayerState extends State<ActionPlayer> {
       final int frameLength = 1000 ~/ ActionManager.readFrameRate;
       int pos =
           ((dualPosition.inMilliseconds + frameLength - 1) ~/ frameLength);
-      if (dualCompareData != null)
-        pos = pos.clamp(0, dualCompareData.highlights.length - 1);
+      if (dualModelData != null)
+        pos = pos.clamp(0, dualModelData.highlights.length - 1);
 
       return new Stack(
         children: <Widget>[
@@ -134,15 +134,15 @@ class _ActionPlayerState extends State<ActionPlayer> {
             standardFile: standardFile,
             speed: getSpeed(
                 dualSpeedOption,
-                dualCompareData != null
-                    ? (dualCompareData.highlights[pos] ? 0.5 : 1.0)
+                dualModelData != null
+                    ? (dualModelData.highlights[pos] ? 0.5 : 1.0)
                     : 1.0),
             flipped: true,
             sampleOverlay: getMovementsSwitch(dualMovementsOption,
-                    dualCompareData != null && dualCompareData.highlights[pos])
+                    dualModelData != null && dualModelData.highlights[pos])
                 ? new CustomPaint(
                     painter:
-                        new ModelPainter(dualCompareData.standardData[pos]),
+                        new ModelPainter(dualModelData.standardData[pos]),
                   )
                 : new Container(width: 0.0, height: 0.0),
             onComplete: finish,
