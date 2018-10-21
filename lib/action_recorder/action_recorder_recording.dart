@@ -45,6 +45,7 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
   bool _finished = false;
 
   VideoPlayerController _playerController;
+  VideoPlayerController _pendingDisposePlayerController;
 
   @override
   void initState() {
@@ -67,6 +68,13 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
         });
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _playerController?.dispose();
+    _pendingDisposePlayerController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -174,7 +182,7 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
     setState(() => _finished = true);
 
     if (_playerController != null) {
-      _playerController.dispose();
+      _pendingDisposePlayerController = _playerController;
       _playerController = null;
     }
 
