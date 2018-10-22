@@ -30,8 +30,11 @@ class ActionModel {
         await ActionManager.score(_id, _standardId, 72, 32);
 
     if (sampleAnalysis == null ||
+        sampleAnalysis.length <= 0 ||
         standardAnalysis == null ||
-        !scoreResult.scored) {
+        standardAnalysis.length <= 0 ||
+        !scoreResult.scored ||
+        scoreResult.scores.length <= 0) {
       return null;
     }
 
