@@ -52,7 +52,7 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
     super.initState();
 
     // TODO: use a separate directory (e.g. app_tmp) for this so that it is managed by the dart code and cleaned up on each app start, as opposed to the C++ initialization
-    // TODO: don't hard code .mp4 format, especially for iOS
+    // TODO: don't hard code .mp4 format
     _path =
         ActionManager.dataPath + '/tmp/recording_' + new Uuid().v4() + '.mp4';
 
@@ -96,8 +96,34 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
         ],
       );
     } else {
-      if (_playerController == null)
-        return new Center(child: new CircularProgressIndicator());
+      if (_finished) return new Center(child: new CircularProgressIndicator());
+
+      if (_playerController == null) {
+        return new Center(
+          child: new Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              new CircularProgressIndicator(),
+              new FlatButton(
+                child: new Text(
+                  'Stop loading'.toUpperCase(),
+                  style: new TextStyle(color: Colors.white),
+                ),
+                onPressed: () {
+                  if (!mounted || _finished) return;
+                  if (_playerController != null) return;
+
+                  _finished = true;
+                  try {
+                    widget.onFinished(
+                        new ActionRecorderRecordingResult(saved: false));
+                  } catch (_) {}
+                },
+              ),
+            ],
+          ),
+        );
+      }
 
       return new Stack(
         children: <Widget>[
@@ -185,7 +211,7 @@ class _ActionRecorderRecordingState extends State<ActionRecorderRecording> {
       _pendingDisposePlayerController = _playerController;
       _playerController = null;
       try {
-        _pendingDisposePlayerController.pause();
+        _pendingDisposePlayerController.pause().catchError((_) {});
       } catch (_) {}
     }
 
