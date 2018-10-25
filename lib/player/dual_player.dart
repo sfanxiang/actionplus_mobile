@@ -56,6 +56,11 @@ class _DualPlayerState extends State<DualPlayer> {
   Widget build(BuildContext context) {
     if (widget.playing != null) _playing = widget.playing; // Enforced state
 
+    // Don't play until both tracks are ready
+    bool currentPlaying = _playing;
+    if (_samplePlaybackValue == null || _standardPlaybackValue == null)
+      currentPlaying = false;
+
     Duration currentPosition = widget._position[0];
     widget._position[0] = null;
 
@@ -82,9 +87,9 @@ class _DualPlayerState extends State<DualPlayer> {
               children: <Widget>[
                 new VideoPlayback(
                   file: widget.standardFile,
-                  playing: _playing,
+                  playing: currentPlaying,
                   position: currentPosition,
-                  volume: !_finished && _playing ? widget.volume : 0.0,
+                  volume: !_finished && currentPlaying ? widget.volume : 0.0,
                   speed: widget.speed,
                   flipped: widget.flipped,
                   onUpdate: _onStandardUpdate,
@@ -99,13 +104,14 @@ class _DualPlayerState extends State<DualPlayer> {
           ),
         ),
         new PlayerControl(
-          playing: _playing,
+          playing: _playing,  // This playing status is for display
           position: displayPosition,
           onPlayPause: () {
             if (!mounted) return;
 
             _playing = !_playing;
 
+            // Take the chance to sync the tracks
             if (!_playing &&
                 _samplePlaybackValue != null &&
                 _standardPlaybackValue != null) {
@@ -143,7 +149,7 @@ class _DualPlayerState extends State<DualPlayer> {
               children: <Widget>[
                 new VideoPlayback(
                   file: widget.sampleFile,
-                  playing: _playing,
+                  playing: currentPlaying,
                   position: currentPosition,
                   volume: 0.0,
                   speed: widget.speed,
