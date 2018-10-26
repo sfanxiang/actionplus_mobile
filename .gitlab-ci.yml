@@ -44,6 +44,9 @@ build_android:
   # download flutter
   # TODO: Currently we download from beta channel. When Flutter is stable, use the stable channel.
   - git clone -b beta https://github.com/flutter/flutter.git --depth=1
+  # TODO: Remove the following 2 lines when #23397 is backported to beta
+  - curl -L https://github.com/flutter/flutter/commit/e93d19c0e7805e375b650ddf69009fa4549ad678.patch | patch -Np1 -t -r /dev/null -d flutter
+  - curl -L https://github.com/flutter/flutter/commit/ecf577ce5a7d8f3df1e320bc160d9f3eaf4a2e07.patch | patch -Np1 -t -r /dev/null -d flutter
   - export PATH=`pwd`/flutter/bin:$PATH
   - flutter doctor
   - flutter config --no-analytics
