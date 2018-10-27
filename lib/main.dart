@@ -30,7 +30,6 @@ class ActionplusApp extends StatelessWidget {
       supportedLocales: [
         // New locales should be added here.
         const Locale('en', 'US'),
-        const Locale('zh', 'CN'),
       ],
     );
   }
