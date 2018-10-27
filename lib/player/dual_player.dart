@@ -104,7 +104,8 @@ class _DualPlayerState extends State<DualPlayer> {
           ),
         ),
         new PlayerControl(
-          playing: _playing,  // This playing status is for display
+          // This playing status is for display
+          playing: _playing,
           position: displayPosition,
           onPlayPause: () {
             if (!mounted) return;
@@ -133,6 +134,11 @@ class _DualPlayerState extends State<DualPlayer> {
                           _samplePlaybackValue.duration.inMilliseconds)
                       .truncate());
               _setPosition = position;
+
+              // Seeking might cause the tracks to be out-of-sync, so we pause
+              // here if we can.
+              _playing = false;
+
               try {
                 widget
                     .onSeek(_samplePlaybackValue.copyWith(position: position));
